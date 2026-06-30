@@ -1,10 +1,13 @@
-name: "[master] Release"
+name: "Release"
 
 on:
  push:
+  branches:
+   - main
   paths-ignore:
    - "**/*.md"
    - ".vscode/**"
+ workflow_dispatch:
 
 jobs:
  Build:
