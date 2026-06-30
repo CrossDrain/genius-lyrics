@@ -1,5 +1,5 @@
 {
-	"name": "@luna/genius-lyrics",
+	"name": "@CrossDrain/genius-lyrics",
 	"description": "Adds a Genius tab to the TIDAL now-playing view with the current song's lyrics and clickable annotations from Genius.",
 	"author": {
 		"name": "CrossDrain",

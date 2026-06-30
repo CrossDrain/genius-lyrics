@@ -1,6 +1,6 @@
 {
-	"name": "genius-lyrics",
-	"description": "TidaLuna plugin that adds a native-feeling Genius tab to TIDAL's now-playing view, fetching lyrics and clickable annotations from Genius.com.",
+	"name": "@CrossDrain/luna-plugins",
+	"description": "TidaLuna plugins",
 	"type": "module",
 	"private": true,
 	"scripts": {
