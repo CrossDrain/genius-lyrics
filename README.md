@@ -15,33 +15,16 @@ A [TidaLuna](https://github.com/Inrixia/TidaLuna) plugin that adds a native-feel
 
 ## Settings
 
-Available under **Luna Settings → Genius Lyrics**:
+Available under **Luna Settings → Plugins → @CrossDrain/genius-lyrics**:
 
 - **Lyrics font size** — scale the lyrics text (50–200%)
 - **Hide section headers** — remove `[Verse]`/`[Chorus]` markers from the fetched lyrics
 - **Auto-refetch on track change** — automatically load lyrics for the next track while the Genius panel is open
 - **Disable annotation highlighting** — don't highlight or make clickable the lyric fragments that have a Genius annotation
 
-## Development
-
-```sh
-pnpm install
-pnpm run watch
-```
-
-This builds the plugin and serves it (with hot reload) for installation via the **DEV** store in **Luna Settings → Plugin Store**.
-
-The plugin source lives in [`plugins/GeniusLyrics`](./plugins/GeniusLyrics).
-
 ## Installing a built release
 
-After a release build runs, install via:
-
-```
-https://github.com/CrossDrain/genius-lyrics/releases/download/latest/luna.genius-lyrics
-```
-
-Or add the store:
+Install by adding the store:
 
 ```
 https://github.com/CrossDrain/genius-lyrics/releases/download/latest/store.json
