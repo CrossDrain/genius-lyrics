@@ -1,0 +1,26 @@
+{
+	"name": "genius-lyrics",
+	"description": "TidaLuna plugin that adds a native-feeling Genius tab to TIDAL's now-playing view, fetching lyrics and clickable annotations from Genius.com.",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"watch": "concurrently \"pnpm:build --watch\" pnpm:serve",
+		"build": "rimraf ./dist && tsx esbuild.config.ts",
+		"serve": "http-server ./dist -p 3000 -s --cors -c-1",
+		"test": "vitest run"
+	},
+	"devDependencies": {
+		"@types/node": "^25.0.9",
+		"@types/react": "^19.2.8",
+		"@types/react-dom": "^19.2.3",
+		"concurrently": "^9.2.1",
+		"http-server": "^14.1.1",
+		"jsdom": "^29.1.1",
+		"luna": "github:Inrixia/TidaLuna",
+		"oby": "^15.1.2",
+		"rimraf": "^6.1.2",
+		"tsx": "^4.21.0",
+		"typescript": "^5.9.3",
+		"vitest": "^4.1.9"
+	}
+}

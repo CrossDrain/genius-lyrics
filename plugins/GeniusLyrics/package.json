@@ -1,0 +1,14 @@
+{
+	"name": "@luna/genius-lyrics",
+	"description": "Adds a Genius tab to the TIDAL now-playing view with the current song's lyrics and clickable annotations from Genius.",
+	"author": {
+		"name": "CrossDrain",
+		"url": "https://github.com/CrossDrain"
+	},
+	"main": "./src/index.ts",
+	"type": "module",
+	"dependencies": {
+		"dompurify": "^3.4.11",
+		"overlayscrollbars": "^2.16.0"
+	}
+}

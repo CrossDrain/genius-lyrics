@@ -1,0 +1,308 @@
+/* When the Genius tab is active, hide the native content panel(s) in the
+   swappable region and show our content instead. Panel-id-agnostic: hides every
+   child of the region except ours. */
+.gl-genius-active > *:not(.genius-lyrics-content) {
+	display: none !important;
+}
+
+/* Same lyrics webfont radiant-lyrics-luna uses — has noticeably better Greek
+   glyph coverage than the system UI font stack. Declared here too (not just
+   relying on radiant possibly being installed) since @font-face needs to be
+   registered by whichever plugin actually uses the family. */
+@font-face {
+	font-family: "AbyssFont";
+	font-weight: 400;
+	src: url("https://excel.lexploits.top/extra/tidal/LyricsRegular.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "AbyssFont";
+	font-weight: 500;
+	src: url("https://excel.lexploits.top/extra/tidal/LyricsMedium.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "AbyssFont";
+	font-weight: 600;
+	src: url("https://excel.lexploits.top/extra/tidal/LyricsSemibold.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "AbyssFont";
+	font-weight: 700;
+	src: url("https://excel.lexploits.top/extra/tidal/LyricsBold.woff2") format("woff2");
+}
+
+/* This element is also the OverlayScrollbars target — the library manages its
+   own internal host/viewport/content structure and overflow, so this just
+   needs to claim the available space; no flex/overflow rules here. */
+.genius-lyrics-content {
+	width: 100%;
+	height: 100%;
+	color: inherit;
+}
+
+.genius-lyrics-content .gl-text {
+	padding: 8px 4px 16px;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	/* 100% now renders at what used to be the 150% size */
+	font-size: calc(22.5px * var(--gl-font-scale, 1));
+	/* Tight — this is the spacing *within* one lyric line, i.e. when a long
+	   line soft-wraps onto a second row. The bigger gap between two actually
+	   different lyric lines comes from .gl-line's margin-bottom below, not
+	   from this. Keeping this tight is what makes the two cases look different
+	   instead of identical. */
+	line-height: 1.3;
+	color: rgba(255, 255, 255, 0.92);
+	font-family:
+		"AbyssFont", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+		Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+/* Each real Genius line (one <br>-separated line in the source) is its own
+   block, with margin between blocks — visibly more than the line-height-only
+   gap a soft-wrapped continuation of the same line gets. */
+.genius-lyrics-content .gl-line {
+	margin-bottom: 0.6em;
+}
+
+.genius-lyrics-content .gl-blank {
+	/* Its own height (from the &nbsp; content) already reads as the stanza
+	   break; stacking the standard line margin on top as well reads as too
+	   big a gap. */
+	margin-bottom: 0;
+}
+
+/* Section headers ("Verse 1", "Chorus", ...) — small letter-spaced tag using
+   TIDAL's own theme-aware accent color (the same Wave design-system var the
+   rest of the app uses for its accent, e.g. the play button/active states),
+   instead of just being smaller bold body text. Room above *and* below so it
+   reads as a label for the section, not just another line.
+   No text-transform: uppercase — CSS case-mapping mangles accented/Greek
+   text (drops tonos marks etc.), so original capitalization from the source
+   is kept as-is. */
+.genius-lyrics-content .gl-section-header {
+	margin-top: 1.6em;
+	margin-bottom: 0.7em;
+	font-size: 0.62em;
+	font-weight: 700;
+	letter-spacing: 0.13em;
+	color: var(--wave-color-solid-accent-fill, #3fe);
+}
+
+/* Don't push the very first line down with that margin-top breathing room. */
+.genius-lyrics-content .gl-text > .gl-section-header:first-child {
+	margin-top: 0;
+}
+
+.genius-lyrics-content .gl-text.gl-empty {
+	padding-top: 40%;
+	text-align: center;
+	color: rgba(255, 255, 255, 0.55);
+	font-style: italic;
+}
+
+/* Trailing divider + source line — part of the normal scroll flow (like
+   radiant's lyrics view), not pinned to the bottom of the panel. */
+.genius-lyrics-content .gl-source-row {
+	padding: 10px 4px 40px;
+	margin-top: 8px;
+	border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.genius-lyrics-content .gl-source-row:empty {
+	display: none;
+}
+
+.genius-lyrics-content .gl-source {
+	font-size: 12px;
+	color: rgba(255, 255, 255, 0.55);
+	cursor: pointer;
+	text-decoration: none;
+}
+
+.genius-lyrics-content .gl-source:hover {
+	color: #fff;
+	text-decoration: underline;
+}
+
+/* --- Annotated fragments + popover (V2) ----------------------------------- */
+
+/* A <span role="button">, not a real <button> — a real button kept inheriting
+   TIDAL's own global button reset (native appearance, rounded corners, and
+   inline-block-like wrapping that painted one rectangle across both visual
+   rows of a wrapped line instead of hugging each row) with no way to verify
+   the override via devtools into the host app's renderer. A span carries none
+   of that baggage, so this rule list is much shorter than fighting a button
+   would require.
+   Genius's own highlighter-marker look (a soft background block behind the
+   text, not an underline) — adapted for a dark panel: genius.com uses a light
+   grey fill behind dark text on a white page, so the dark-mode equivalent is a
+   translucent light overlay behind the existing light lyric text, not a literal
+   grey/black swap. Always visible (not hover-only) — clickability must not
+   depend on hover discovery, since most users won't otherwise know this
+   feature exists. */
+.genius-lyrics-content .gl-annotation {
+	display: inline;
+	cursor: pointer;
+	background-color: rgba(255, 255, 255, 0.14);
+	/* Vertical-only padding, no horizontal padding/radius/margin — matches
+	   genius.com's own highlight technique. Two annotated segments sitting
+	   right next to each other (no plain text between them, e.g. adjacent
+	   different annotations) need flush, gap-free backgrounds so they melt
+	   into one continuous highlight instead of reading as separate chips with
+	   a visible seam between their corners. */
+	padding: 0.1em 0;
+	/* Defensive: TIDAL's design system likely styles [role="button"]/[tabindex]
+	   elements with some default "this is clickable" affordance (a bottom
+	   border or underline) — exactly the same class of host-app bleed-through
+	   that caused the earlier rounded-box bug with a real <button>. Kill every
+	   plausible source of a stray line at once rather than guess which one. */
+	border: none;
+	outline: none;
+	text-decoration: none;
+	box-shadow: none;
+}
+
+/* Same brighten-on-hover language as .gl-source:hover above, translated to a
+   stronger highlighter fill instead of a color change. .gl-annotation-hover is
+   the JS-driven group equivalent: a multi-line annotation has one button per
+   line, and hovering any of them highlights all of them, not just the line
+   under the pointer. */
+.genius-lyrics-content .gl-annotation:hover,
+.genius-lyrics-content .gl-annotation.gl-annotation-hover {
+	background-color: rgba(255, 255, 255, 0.24);
+}
+
+.genius-lyrics-content .gl-annotation:focus-visible {
+	outline: 2px solid var(--wave-color-solid-accent-fill, #3fe);
+	outline-offset: 2px;
+	border-radius: 3px;
+}
+
+/* Persistent "open" state while its popover is showing — same active/inactive
+   pairing convention index.ts already uses for the native tab buttons, applied
+   here at the fragment level. Same fill as hover; staying open should look the
+   same as actively pointing at it. */
+.genius-lyrics-content .gl-annotation-active {
+	background-color: rgba(255, 255, 255, 0.24);
+}
+
+/* Inserted in-flow immediately after the triggering .gl-line (not an absolutely
+   positioned overlay) — part of the normal scrollable content, can never clip
+   off-screen. Reuses the .gl-source-row divider treatment (thin top border, no
+   shadow/gradient) for the same flat, minimal-chrome panel language. */
+.genius-lyrics-content .gl-annotation-popover {
+	margin: 0.4em 0 0.8em;
+	padding: 0.6em 0.7em 0.1em;
+	border-top: 1px solid rgba(255, 255, 255, 0.08);
+	font-size: 0.85em;
+	line-height: 1.4;
+	color: rgba(255, 255, 255, 0.9);
+}
+
+.genius-lyrics-content .gl-annotation-popover:focus {
+	outline: none;
+}
+
+.genius-lyrics-content .gl-annotation-popover p {
+	margin: 0 0 0.6em;
+}
+
+/* Headings inside annotation bodies are rare and small (e.g. a one-line
+   cross-reference to another annotation, not a real section title) — sized
+   relative to the popover's own already-small font-size rather than jumping
+   up to a typical heading size. */
+.genius-lyrics-content .gl-annotation-popover h1,
+.genius-lyrics-content .gl-annotation-popover h2,
+.genius-lyrics-content .gl-annotation-popover h3,
+.genius-lyrics-content .gl-annotation-popover h4,
+.genius-lyrics-content .gl-annotation-popover h5,
+.genius-lyrics-content .gl-annotation-popover h6 {
+	margin: 0 0 0.5em;
+	font-size: 1em;
+	font-weight: 700;
+}
+
+/* Verified/artist-provided annotation, not a general community one — matches
+   genius.com's own treatment of distinguishing the two. */
+.genius-lyrics-content .gl-annotation-verified {
+	margin: 0 0 0.5em;
+	font-size: 0.85em;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	color: #3dd66b;
+}
+
+.genius-lyrics-content .gl-annotation-popover blockquote {
+	margin: 0 0 0.6em;
+	padding-left: 0.7em;
+	border-left: 2px solid rgba(255, 255, 255, 0.16);
+	color: rgba(255, 255, 255, 0.75);
+}
+
+/* small/center — observed in the wild as an image caption sitting directly
+   under a <p><img>...</p> block. Dimmed and centered like a real photo
+   caption, not body text. */
+.genius-lyrics-content .gl-annotation-popover small {
+	display: block;
+	margin: -0.2em 0 0.6em;
+	font-size: 0.85em;
+	color: rgba(255, 255, 255, 0.55);
+}
+
+.genius-lyrics-content .gl-annotation-popover center {
+	text-align: center;
+}
+
+.genius-lyrics-content .gl-annotation-popover ul {
+	margin: 0 0 0.6em;
+	padding-left: 1.2em;
+}
+
+.genius-lyrics-content .gl-annotation-popover li {
+	margin-bottom: 0.2em;
+}
+
+/* Same thin-divider language as .gl-source-row's top border — a plain rule,
+   no shadow/gradient. */
+.genius-lyrics-content .gl-annotation-popover hr {
+	margin: 0.6em 0;
+	border: none;
+	border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.genius-lyrics-content .gl-annotation-popover a {
+	color: var(--wave-color-solid-accent-fill, #3fe);
+	text-decoration: underline;
+}
+
+.genius-lyrics-content .gl-annotation-popover a:hover {
+	color: #fff;
+}
+
+/* Images inside annotation popovers — constrained to panel width, with a small
+   gap above and below so they don't butt up against surrounding text. */
+.genius-lyrics-content .gl-annotation-img {
+	display: block;
+	max-width: 100%;
+	height: auto;
+	margin: 0.4em 0;
+	border-radius: 3px;
+}
+
+/* Iframe/video/audio embeds rendered as a safe fallback link rather than an
+   actual embed — styled like the standard accent-color annotation link. */
+.genius-lyrics-content .gl-annotation-embed-link {
+	display: inline-block;
+	margin: 0.3em 0;
+}
+
+/* Same dimmed-italic treatment as .gl-empty — one shared style, not a new one,
+   for both the "Loading…" and "Couldn't load this annotation." states. */
+.genius-lyrics-content .gl-annotation-popover.gl-annotation-loading,
+.genius-lyrics-content .gl-annotation-popover.gl-annotation-error {
+	color: rgba(255, 255, 255, 0.55);
+	font-style: italic;
+}
